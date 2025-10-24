@@ -1,0 +1,35 @@
+name: Expand short link
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  expand:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.comment.body, '/expand')
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install deps
+        run: npm ci
+        working-directory: .
+
+      - name: Resolve and comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          INPUT_COMMENT_BODY: ${{ github.event.comment.body }}
+          INPUT_ISSUE_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          INPUT_COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+        run: node scripts/resolve.js
